@@ -1,4 +1,5 @@
-# Incident Response Simulator
+# Incident Response Simulator <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/5ef4e90a-a7c5-42b1-ad26-0f6ba56918af" />
+
 
 A comprehensive cybersecurity training platform for practicing incident response in a safe, controlled environment. This platform provides interactive simulations, educational materials, and real-time security system demonstrations.
 
