@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  # Victim Workstation
+  victim_workstation:
+    image: ubuntu:20.04
+    container_name: victim_workstation
+    hostname: DESKTOP-VICTIM01
+    networks:
+      - ir_network
+    ports:
+      - "2222:22"
+      - "8080:80"
+    environment:
+      - USER=john_doe
+      - HOSTNAME=DESKTOP-VICTIM01
+      - DEBIAN_FRONTEND=noninteractive
+    volumes:
+      - ./containers/victim/logs:/var/log/custom
+      - ./containers/victim/scripts:/scripts
+    command: |
+      bash -c "
+      apt-get update -qq &&
+      apt-get install -y -qq openssh-server apache2 curl wget &&
+      echo 'root:password123' | chpasswd &&
+      echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config &&
+      service ssh start &&
+      service apache2 start &&
+      echo '<h1>Corporate Workstation - DESKTOP-VICTIM01</h1>' > /var/www/html/index.html &&
+      echo 'Victim workstation is ready' | tee /var/log/custom/setup.log &&
+      tail -f /dev/null
+      "
+
+  # Attacker Server
+  attacker_server:
+    image: ubuntu:20.04
+    container_name: attacker_server
+    hostname: evil-server
+    networks:
+      - ir_network
+    ports:
+      - "9090:80"
+      - "9443:443"
+    environment:
+      - ATTACK_TYPE=phishing
+      - TARGET=victim_workstation
+      - DEBIAN_FRONTEND=noninteractive
+    volumes:
+      - ./containers/attacker/logs:/var/log/custom
+      - ./containers/attacker/web:/var/www/html
+    command: |
+      bash -c "
+      apt-get update -qq &&
+      apt-get install -y -qq apache2 python3 python3-pip curl &&
+      service apache2 start &&
+      echo '<h1>Legitimate Bank Login</h1><form><input placeholder=\"Username\"><input placeholder=\"Password\" type=\"password\"><button>Login</button></form>' > /var/www/html/index.html &&
+      echo 'Attacker server ready' | tee /var/log/custom/setup.log &&
+      tail -f /dev/null
+      "
+
+  # Log Collector
+  log_collector:
+    image: ubuntu:20.04
+    container_name: log_collector
+    hostname: siem-server
+    networks:
+      - ir_network
+    ports:
+      - "5140:514"
+    volumes:
+      - ./logs:/var/log/collected
+      - ./containers/siem/scripts:/scripts
+    command: |
+      bash -c "
+      apt-get update -qq &&
+      apt-get install -y -qq rsyslog python3 python3-pip &&
+      echo 'Log collector ready' | tee /var/log/collected/collector.log &&
+      tail -f /dev/null
+      "
+
+  # FIXED: Privilege Escalation Lab
+  privesc_lab:
+    image: ubuntu:20.04
+    container_name: privesc_lab
+    hostname: vulnerable-server
+    networks:
+      - ir_network
+    ports:
+      - "2223:22"
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+    cap_add:
+      - SYS_PTRACE
+      - SETUID
+      - SETGID
+    privileged: true
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        set +e
+        apt-get update -qq
+        apt-get install -y -qq sudo vim nano python3 gcc openssh-server make
+        useradd -m -s /bin/bash lowpriv
+        echo 'lowpriv:student123' | chpasswd
+        printf '#include <stdio.h>\n#include <stdlib.h>\n#include <unistd.h>\nint main(void) {\nsetuid(0);\nsetgid(0);\nprintf("===========================================\\n");\nprintf("ROOT ACCESS ACHIEVED!\\n");\nprintf("===========================================\\n");\nprintf("You are now: ");\nfflush(stdout);\nsystem("whoami");\nprintf("User ID: ");\nfflush(stdout);\nsystem("id");\nprintf("\\nReading /root/flag.txt:\\n");\nfflush(stdout);\nsystem("cat /root/flag.txt");\nprintf("\\n===========================================\\n");\nreturn 0;\n}\n' > /tmp/root_shell.c
+        gcc -o /usr/local/bin/backup /tmp/root_shell.c
+        chown root:root /usr/local/bin/backup
+        chmod 4755 /usr/local/bin/backup
+        echo 'FLAG{pr1v3sc_m4st3r_2024}' > /root/flag.txt
+        chmod 600 /root/flag.txt
+        echo 'lowpriv ALL=(ALL) NOPASSWD: /usr/bin/find' >> /etc/sudoers
+        service ssh start
+        mkdir -p /home/lowpriv/hints
+        echo 'Find SUID: find / -perm -4000 2>/dev/null' > /home/lowpriv/hints/hint1.txt
+        echo 'Execute: /usr/local/bin/backup' > /home/lowpriv/hints/hint2.txt
+        chown -R lowpriv:lowpriv /home/lowpriv
+        echo '========================='
+        echo 'Privesc Lab READY'
+        ls -la /usr/local/bin/backup
+        file /usr/local/bin/backup
+        echo 'Flag:'
+        ls -la /root/flag.txt
+        echo '========================='
+        tail -f /dev/null
+
+  # FIXED: Password Cracking Lab
+  hashcrack_lab:
+    image: ubuntu:22.04
+    container_name: hashcrack_lab
+    hostname: cracking-station
+    networks:
+      - ir_network
+    ports:
+      - "2224:22"
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        set +e
+        apt-get update -qq
+        apt-get install -y -qq hashcat john curl wget git python3 openssh-server
+        useradd -m -s /bin/bash pentester
+        echo 'pentester:cracker123' | chpasswd
+        mkdir -p /hashes /wordlists /results
+        printf 'password\n123456\nadmin\nletmein\nqwerty\n12345678\npass123\nPassword123\n' > /wordlists/rockyou.txt
+        cp /wordlists/rockyou.txt /wordlists/common-1k.txt
+        printf '5f4dcc3b5aa765d61d8327deb882cf99\ne10adc3949ba59abbe56e057f20f883e\n25d55ad283aa400af464c76d713c07ad\nfcea920f7412b5da7be0cf42b8c93759\n1a1dc91c907325c69271ddf0c944bc72\n' > /hashes/company_dump_md5.txt
+        printf '5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8\n8cb2237d0679ca88db6464eac60da96345513964\n' > /hashes/company_dump_sha1.txt
+        printf '209c6174da490caeb422f3fa5a7ae634\n32ed87bdb5fdc5e9cba88547376818d4\n' > /hashes/company_dump_ntlm.txt
+        printf 'HASHCAT: hashcat -m 0 /hashes/company_dump_md5.txt /wordlists/rockyou.txt --force\nhashcat -m 0 /hashes/company_dump_md5.txt --show\n' > /hashes/README.txt
+        chown -R pentester:pentester /hashes /wordlists /results
+        service ssh start
+        echo '========================='
+        echo 'Hashcrack Lab READY'
+        wc -l /wordlists/rockyou.txt
+        ls /hashes/
+        echo '========================='
+        tail -f /dev/null
+
+networks:
+  ir_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
