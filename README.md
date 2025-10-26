@@ -845,14 +845,13 @@ docker-compose logs <service_name>
 ---
 
 ## Authors
-Lidor Ben Simon – Software Engineering Student
+- **Rotem Swisa** – Software Engineering Student
+- **Lidor Ben Simon** – Software Engineering Student
+  
+🔗 Link to my LinkedIn profile www.linkedin.com/in/rotem-swisa-10b675382
 
-Rotem Swisa – Software Engineering Student
+🔗 Link to the team member's LinkedIn profile www.linkedin.com/in/לידור-בן-סימון-281576384/
 
-🔗 Link to my LinkedIn profile www.linkedin.com/in/לידור-בן-סימון-281576384/
-
-🔗 Link to the team member's LinkedIn profile www.linkedin.com/in/rotem-swisa-10b675382
-
-🔗 Feel free to visit his GitHub to check out his projects too https://github.com/RotemSwisa
+🔗 Feel free to visit his GitHub to check out his projects too https://github.com/LidorBenSimon
 
 ---
