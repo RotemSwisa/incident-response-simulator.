@@ -68,8 +68,8 @@ The Incident Response Simulator is an educational platform designed for cybersec
 ┌─────────────────────────────────────────────────────────────┐
 │                        Frontend (React)                     │
 │  ┌──────────────┬─────────────────┬────────────────────┐    │
-│  │   Learning   │  Training Center │   System Demos     │   │
-│  │   Materials  │   (Interactive)  │  (Visualization)   │   │
+│  │   Learning   │  Training Center│   System Demos     │    │
+│  │   Materials  │   (Interactive) │  (Visualization)   │    │
 │  └──────────────┴─────────────────┴────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
                               ↕
@@ -836,12 +836,6 @@ docker-compose logs <service_name>
 ```
 - If a page doesn't load, confirm host port mappings with `docker ps`.
 - If wordlists or sample hashes are missing, inspect the container volumes and the `hashes/` and `wordlists/` folders.
-
----
-
-## Short GitHub description (for "About" / repo short description)
-
-**Incident Response Simulator — hands-on cybersecurity training platform with password‑cracking, privilege‑escalation and phishing exercises, designed for safe learning and teaching.**
 
 ---
 
